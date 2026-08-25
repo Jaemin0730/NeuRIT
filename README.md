@@ -299,10 +299,13 @@ CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="NeuRIT
 If you find this repository useful, please cite our paper:
 
 ```bibtex
-@article{kim2026neurorit,
-  title   = {Where Does Robustness Live? Neuron-Guided Adaptation for Retrieval-Augmented Language Models},
-  author  = {Kim, Jaemin and Lee, Jae O and Ahn, Sumyeong and Park, Seo Yeon},
-  journal = {arXiv preprint arXiv:2604.02194},
-  year    = {2026}
+@misc{kim2026neuroritneuronguidedinstructiontuning,
+      title={Neuro-RIT: Neuron-Guided Instruction Tuning for Robust Retrieval-Augmented Language Model}, 
+      author={Jaemin Kim and Jae O Lee and Sumyeong Ahn and Seo Yeon Park},
+      year={2026},
+      eprint={2604.02194},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2604.02194}, 
 }
 ```
