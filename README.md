@@ -4,9 +4,13 @@ This repository contains the implementation of **NeuRIT**, a neuron-guided
 instruction-tuning framework for improving the robustness of retrieval-augmented
 language models (RALMs) against irrelevant or noisy retrieved contexts.
 
-[[Paper](https://arxiv.org/abs/2604.02194)]
-[[Code](https://github.com/Jaemin0730/NeuRIT)]
-[[Model](https://huggingface.co/Jaemin0730/NeuRIT)]
+<p align="center">
+  <a href="https://arxiv.org/abs/2604.02194"><strong>Paper</strong></a>
+  &nbsp;|&nbsp;
+  <a href="https://github.com/Jaemin0730/NeuRIT"><strong>Code</strong></a>
+  &nbsp;|&nbsp;
+  <a href="https://huggingface.co/Jaemin0730/NeuRIT"><strong>Model</strong></a>
+</p>
 
 ## Overview
 
