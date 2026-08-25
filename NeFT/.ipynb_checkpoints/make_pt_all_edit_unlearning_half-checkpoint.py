@@ -1,0 +1,117 @@
+import torch
+
+# ==========================================
+# 1. 설정 (Soft Masking Weights)
+# 요청하신 가중치 설정
+# ==========================================
+
+BOTTOM_W = 1.0
+
+# ==========================================
+# 2. 데이터 입력 (제공해주신 데이터)
+# 형식: ["layer@neuron_idx", score/count]
+# ==========================================
+
+
+raw_bottom = [
+    ["31@5933", 30], ["5@5398", 9], ["5@5108", 8], ["6@13428", 8],
+["30@12387", 8], ["5@3071", 7], ["5@3220", 7], ["5@7994", 7],
+["4@1197", 6], ["13@8356", 6], ["27@11829", 5], ["5@3685", 5],
+["5@12544", 5], ["14@2237", 5], ["8@8460", 4], ["17@13357", 4],
+["4@5812", 4], ["30@1793", 4], ["6@11983", 4], ["12@13126", 4],
+["5@9753", 4], ["11@1701", 3], ["13@8959", 3], ["14@1418", 3],
+["8@9373", 3], ["8@1072", 3], ["5@3633", 3], ["17@11113", 3],
+["3@1364", 3], ["5@1405", 3], ["14@2987", 3], ["18@9865", 3],
+["11@11824", 3], ["5@7435", 3], ["11@14282", 3], ["5@7012", 3],
+["17@965", 2], ["16@2308", 2], ["29@1173", 2], ["28@1083", 2],
+["15@1508", 2], ["12@4268", 2], ["5@3319", 2], ["6@9335", 2],
+["11@5563", 2], ["12@13738", 2], ["5@11332", 2], ["5@13031", 2],
+["18@2664", 2], ["24@2804", 2]
+]
+
+# ==========================================
+# 3. 모델 파라미터 (Llama 3 8B 기준)
+# ==========================================
+NUM_LAYERS = 32
+HIDDEN_SIZE = 4096
+INTERMEDIATE_SIZE = 14336 # 8B 모델의 FFN 차원
+
+# ==========================================
+# 4. 마스크 딕셔너리 초기화 (전부 0으로 시작)
+# ==========================================
+mask_dict = {}
+print(f"Initializing masks for {NUM_LAYERS} layers (Target: Soft Masking)...")
+
+for i in range(NUM_LAYERS):
+    layer_name_in = f"{i}_in"
+    layer_name_out = f"{i}_out"
+    
+    mask_dict[layer_name_in] = torch.zeros(HIDDEN_SIZE, INTERMEDIATE_SIZE)
+    mask_dict[layer_name_out] = torch.zeros(INTERMEDIATE_SIZE, HIDDEN_SIZE)
+
+print("Initialization complete.")
+
+# ==========================================
+# 5. Soft Masking 적용 함수
+# ==========================================
+def apply_mask_to_group(neuron_data_list, weight, group_name):
+    """
+    neuron_data_list: ["layer@neuron", count] 형태의 리스트
+    weight: 적용할 가중치 (실수값)
+    group_name: 로그 출력용 이름
+    """
+    applied_count = 0
+    for item in neuron_data_list:
+        # 데이터 파싱: "0@9187" -> layer=0, neuron=9187
+        info_str = item[0] 
+        layer_str, neuron_str = info_str.split('@')
+        
+        layer_idx = int(layer_str)
+        neuron_idx = int(neuron_str)
+        
+        # 범위 체크
+        if layer_idx >= NUM_LAYERS or neuron_idx >= INTERMEDIATE_SIZE:
+            print(f"Warning: {group_name} index [L{layer_idx}, N{neuron_idx}] out of bounds. Skipping.")
+            continue
+
+        # up_proj ('_in'): 해당 뉴런의 열(column)에 weight 적용
+        in_key = f"{layer_idx}_in"
+        mask_dict[in_key][:, neuron_idx] = weight
+        
+        # down_proj ('_out'): 해당 뉴런의 행(row)에 weight 적용
+        out_key = f"{layer_idx}_out"
+        mask_dict[out_key][neuron_idx, :] = weight
+        
+        applied_count += 1
+    
+    print(f"Applied [{group_name}] group: {applied_count} neurons with weight {weight}")
+
+# ==========================================
+# 6. 그룹별 적용 실행
+# ==========================================
+print("\n--- Applying Soft Masks ---")
+# apply_mask_to_group(raw_top, TOP_W, "TOP")
+# apply_mask_to_group(raw_inter, INTER_W, "INTER")
+apply_mask_to_group(raw_bottom, BOTTOM_W, "BOTTOM")
+
+# ==========================================
+# 7. 파일 저장
+# ==========================================
+save_path = 'sft_neuron_mask.pt'
+torch.save(mask_dict, save_path)
+print(f"\nSuccessfully saved SFT neuron mask to {save_path}")
+
+# ==========================================
+# 8. 검증 (값이 제대로 들어갔는지 확인)
+# ==========================================
+print("\n--- Verifying Mask Values ---")
+loaded_dict = torch.load(save_path)
+
+# 랜덤하게 몇 개 레이어의 max 값을 찍어보며 0, 0.5, 1.0이 존재하는지 확인
+sample_layer = "30_in"  # Bottom, Inter가 많이 포함된 30번 레이어 확인
+if sample_layer in loaded_dict:
+    unique_values = torch.unique(loaded_dict[sample_layer])
+    print(f"Unique values in {sample_layer}: {unique_values}")
+    # 예상 결과: tensor([0.0000, 0.5000, 1.0000]) 등이 나와야 함 (0.5는 bottom, 1.0은 top/inter)
+
+print("Verification complete! Ready for training.")
