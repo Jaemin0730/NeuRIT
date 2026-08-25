@@ -4,13 +4,19 @@ This repository contains the implementation of **NeuRIT**, a neuron-guided
 instruction-tuning framework for improving the robustness of retrieval-augmented
 language models (RALMs) against irrelevant or noisy retrieved contexts.
 
-> **Note:** This README is based on the earlier version of the paper.
-
 [[Paper](https://arxiv.org/abs/2604.02194)]
 [[Code](https://github.com/Jaemin0730/NeuRIT)]
 [[Model](https://huggingface.co/Jaemin0730/NeuRIT)]
 
 ## Overview
+
+<p align="center">
+  <img src="assets/main_alg.png" width="100%" alt="Overview of the NeuRIT framework">
+</p>
+
+<p align="center">
+  <em>Overview of NeuRIT: context-aware neuron mining followed by two-stage neuron-guided instruction tuning.</em>
+</p>
 
 Retrieved documents often include content that is irrelevant to a query and can
 mislead the generator. NeuRIT addresses this problem at neuron-level
@@ -168,6 +174,7 @@ Run attribution for the two context groups on separate GPUs:
 cd Phase1
 
 CUDA_VISIBLE_DEVICES=0 bash src/1_run_calculate_top_llama3-8b.sh
+CUDA_VISIBLE_DEVICES=1 bash src/1_run_calculate_bottom_llama3-8b.sh
 ```
 
 ### 2. Decouple Context-Aware Neurons
@@ -264,22 +271,23 @@ For the evaluation setup and implementation, please refer to
 [BERGEN: A Benchmarking Library for Retrieval-Augmented Generation](https://github.com/naver/bergen).
 We use SPLADE-v3 as the retriever and evaluate the fine-tuned generator on each
 development split. Run the following commands from the BERGEN repository after
-using the released `Jaemin0730/NeuRIT` model:
+using the `NeuRIT` generator configuration for the released
+[`Jaemin0730/NeuRIT`](https://huggingface.co/Jaemin0730/NeuRIT) model:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="Jaemin0730/NeuRIT" dataset="kilt_nq" +dataset_split=dev
+CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="NeuRIT" dataset="kilt_nq" +dataset_split=dev
 
-CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="Jaemin0730/NeuRIT" dataset="kilt_hotpotqa" +dataset_split=dev
+CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="NeuRIT" dataset="kilt_hotpotqa" +dataset_split=dev
 
-CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="Jaemin0730/NeuRIT" dataset="asqa" +dataset_split=dev
+CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="NeuRIT" dataset="asqa" +dataset_split=dev
 
-CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="Jaemin0730/NeuRIT" dataset="sciq" +dataset_split=dev
+CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="NeuRIT" dataset="sciq" +dataset_split=dev
 
-CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="Jaemin0730/NeuRIT" dataset="popqa" +dataset_split=dev
+CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="NeuRIT" dataset="popqa" +dataset_split=dev
 
-CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="Jaemin0730/NeuRIT" dataset="2wikimultihopqa" +dataset_split=dev
+CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="NeuRIT" dataset="2wikimultihopqa" +dataset_split=dev
 
-CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="Jaemin0730/NeuRIT" dataset="kilt_triviaqa" +dataset_split=dev
+CUDA_VISIBLE_DEVICES=0 python3 bergen.py retriever="splade-v3" generator="NeuRIT" dataset="kilt_triviaqa" +dataset_split=dev
 ```
 
 ## Citation
